@@ -1,8 +1,7 @@
+#include <gps/gps.h>
 #include <zephyr/kernel.h>
 
-void main(void) {
-  for (;;) {
-    printk("Meow\n");
-    k_msleep(1000);
-  }
-}
+#define STACKSIZE 1024
+#define PRIORITY 7
+
+K_THREAD_DEFINE(T_GPS, STACKSIZE, gps_thread, NULL, NULL, NULL, PRIORITY, 0, 0);

@@ -1,0 +1,10 @@
+/ {
+  aliases {
+    gps = &uart2;
+  };
+};
+
+&uart2 {
+  status = "okay";
+  current-speed = <9600>;
+};
