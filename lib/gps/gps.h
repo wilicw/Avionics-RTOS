@@ -10,8 +10,11 @@
 
 #define BUFFER_MAX 256
 #define BUFFER_BLOCK 1
+#define DEFAULT_GPS_NODE DT_ALIAS(gps)
 
 #define CHAR2INT(x) ((x) - '0')
+
+BUILD_ASSERT(DT_NODE_HAS_STATUS(DEFAULT_GPS_NODE, okay), "No default GPS module specified in DT");
 
 typedef struct {
   uint8_t* field[25];
