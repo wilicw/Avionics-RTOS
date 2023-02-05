@@ -22,5 +22,5 @@ If you are interested in our project and want to support us, please contact us w
 - aerogroup2020@gmail.com
 - [Facebook](https://www.facebook.com/ispncku)
 
-## [LICENSE](https://github.com/NCKU-ISP/Avionics/blob/boards/LICENSE)
+## LICENSE
 Distributed under the BSD 3-clause License. See LICENSE for more information.
