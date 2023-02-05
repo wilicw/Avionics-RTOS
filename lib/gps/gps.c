@@ -23,7 +23,7 @@ static inline void gnss_encode(uint8_t *raw) {
   }
 
   if (strcmp(&parsed.field[0][3], "GGA") == 0) {
-    /* GGS Format
+    /* GGA Format
      * $--GGA,<1>,<2>,<3>,<4>,<5>,<6>,<7>,<8>,<9>,M,<11>,M,<13>,<14>*xx
      *  <1>: UTC Time: hhmmss.sss
      *  <2>: latitude: ddmm.mmmm(m)

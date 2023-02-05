@@ -1,5 +1,5 @@
-#ifndef __GPS_H__
-#define __GPS_H__
+#ifndef __GPS_L__
+#define __GPS_L__
 
 #include <stdint.h>
 #include <string.h>
