@@ -1,5 +1,5 @@
 .PHONY: all build clean flash
-all: build
+all: build flash
 
 build:
 	west build -b esp32
