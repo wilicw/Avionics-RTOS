@@ -31,7 +31,9 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "ws2812.h"
+#include "buzzer.h"
+#include "servo.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
