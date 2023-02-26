@@ -31,6 +31,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define SERVOS_NUM 4
+#define I2C_BUFF 5
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,7 +50,9 @@ DMA_HandleTypeDef hdma_spi1_tx;
 TIM_HandleTypeDef htim3;
 /* USER CODE BEGIN PV */
 buzz_t buzz;
-servo_t servos[4];
+servo_t servos[SERVOS_NUM];
+uint8_t i2c_buffer[I2C_BUFF];
+uint8_t i2c_complete_flag;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -79,6 +83,36 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   }
 }
 
+#define I2C_RST 0x0
+#define I2C_RGB 0x1
+#define I2C_BUZZ 0x2
+#define I2C_SERVO 0x3
+
+void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c) {
+  switch (i2c_buffer[0]) {
+    case I2C_RST:
+      NVIC_SystemReset();
+    case I2C_RGB:
+      ws2812_set(&hspi1, i2c_buffer[1], i2c_buffer[3], i2c_buffer[3], 1);
+      break;
+    case I2C_BUZZ:
+      buzzer_tone(&buzz, 4000, ((uint32_t) i2c_buffer[1] << 24) | ((uint32_t) i2c_buffer[2] << 16) |
+                               ((uint32_t) i2c_buffer[3] << 8) | ((uint32_t) i2c_buffer[4]));
+      break;
+    case I2C_SERVO:
+      servo_set(&servos[i2c_buffer[1] % SERVOS_NUM], (i2c_buffer[2] ? 1 : -1) * (int16_t) i2c_buffer[3]);
+      break;
+    default:
+      break;
+  }
+  if (hi2c->Instance == hi2c1.Instance)
+    i2c_complete_flag = 1;
+}
+
+void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode) {
+  if (TransferDirection == 0)
+    HAL_I2C_Slave_Seq_Receive_IT(hi2c, i2c_buffer, I2C_BUFF, I2C_FIRST_AND_LAST_FRAME);
+}
 /* USER CODE END 0 */
 
 /**
@@ -113,6 +147,8 @@ int main(void) {
   MX_SPI1_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+  i2c_complete_flag = 1;
+  HAL_I2C_EnableListen_IT(&hi2c1);
 
   buzz.port = GPIOA;
   buzz.pin = GPIO_PIN_0;
@@ -147,15 +183,19 @@ int main(void) {
   static uint8_t state = 0;
   static uint8_t r = 0, g = 0, b = 0;
 
-  buzzer_tone(&buzz, 4000);
+  HAL_Delay(1000);
+  buzzer_enable(&buzz);
   for (size_t i = 0; i < 4; i++) {
-    buzzer_enable(&buzz);
-    HAL_Delay(50);
-    buzzer_disable(&buzz);
-    HAL_Delay(50);
+    buzzer_tone(&buzz, 4000, 50);
+    HAL_Delay(100);
   }
 
   while (1) {
+    if (i2c_complete_flag) {
+      HAL_I2C_EnableListen_IT(&hi2c1);
+      i2c_complete_flag = 0;
+    }
+
     switch (state) {
       case 0:
         r++;
