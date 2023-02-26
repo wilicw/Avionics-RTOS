@@ -15,9 +15,10 @@ typedef struct {
   uint32_t div;
   GPIO_TypeDef *port;
   uint16_t pin;
+  uint32_t duration;
 } buzz_t;
 
-void buzzer_tone(buzz_t *, uint16_t);
+void buzzer_tone(buzz_t *, uint16_t, uint32_t);
 
 void buzzer_enable(buzz_t *);
 
