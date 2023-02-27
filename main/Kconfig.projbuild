@@ -1,0 +1,89 @@
+menu "Example Configuration"
+
+    orsource "$IDF_PATH/examples/common_components/env_caps/$IDF_TARGET/Kconfig.env_caps"
+
+    config FIRE_1
+        int "GPIO output pin for ignitor #1"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+        default 48
+        help
+            GPIO output pin for ignitor #1
+
+    config FIRE_2
+        int "GPIO output pin for ignitor #1"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+        default 47
+        help
+            GPIO output pin for ignitor #2
+
+    config I2C_MASTER_SCL
+        int "SCL GPIO Num"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+        default 8
+        help
+            GPIO number for I2C Master clock line.
+
+    config I2C_MASTER_SDA
+        int "SDA GPIO Num"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+        default 9
+        help
+            GPIO number for I2C Master data line.
+
+	config MISO_GPIO
+		int "SPI MISO GPIO"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+		default 37
+		help
+			Pin Number to be used as the MISO SPI signal.
+
+	config SCLK_GPIO
+		int "SPI SCLK GPIO"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+		default 36
+		help
+			Pin Number to be used as the SCLK SPI signal.
+
+	config MOSI_GPIO
+		int "SPI MOSI GPIO"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+		default 35
+		help
+			Pin Number to be used as the MOSI SPI signal.
+
+	config LORA_NSS_GPIO
+		int "LORA NSS GPIO"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+		default 2
+		help
+			Pin Number to be used as the NSS SPI signal.
+
+	config RST_GPIO
+		int "LORA RST GPIO"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+		default 21
+		help
+			Pin Number to be used as the RST signal.
+
+	config BUSY_GPIO
+		int "LORA BUSY GPIO"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+        default 38
+		help
+			Pin Number to be used as the BUSY signal.
+
+	config TXEN_GPIO
+		int "LORA TXEN GPIO"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+		default -1
+		help
+			Pin Number to be used as the TXEN signal.
+
+	config RXEN_GPIO
+		int "LORA RXEN GPIO"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+		default -1
+		help
+			Pin Number to be used as the RXEN signal.
+
+endmenu
