@@ -5,6 +5,7 @@
 static QueueHandle_t uart_queue;
 static spi_device_handle_t spi_handle;
 static uint8_t ignitor[] = {GPIO_FIRE_1, GPIO_FIRE_2};
+static portMUX_TYPE spi_spinlock = portMUX_INITIALIZER_UNLOCKED;
 
 void gpio_init() {
   static const gpio_config_t io_conf = {
@@ -73,7 +74,7 @@ void spi_init() {
   devcfg.clock_speed_hz = SPI_FREQ_HZ;
   // It does work with software CS control.
   devcfg.spics_io_num = -1;
-  devcfg.queue_size = 7;
+  devcfg.queue_size = 5;
   devcfg.mode = 0;
   devcfg.flags = SPI_DEVICE_NO_DUMMY;
 
@@ -82,10 +83,30 @@ void spi_init() {
   ESP_LOGI(TAG, "spi_bus_add_device=%d", ret);
 }
 
+void sd_init() {
+  sdmmc_card_t* card;
+  const char mount_point[] = SD_MOUNT;
+  sdmmc_host_t host = SDSPI_HOST_DEFAULT();
+  sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
+  esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+      .format_if_mount_failed = true,
+      .max_files = 5,
+      .allocation_unit_size = 16 * 1024,
+  };
+  slot_config.gpio_cs = CONFIG_SD_NSS_GPIO;
+  slot_config.host_id = host.slot;
+  esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config, &card);
+  sdmmc_card_print_info(stdout, card);
+}
+
 spi_device_handle_t* fetch_spi_handler() {
   return &spi_handle;
 }
 
 QueueHandle_t* fetch_uart_queue() {
   return &uart_queue;
+}
+
+portMUX_TYPE* fetch_spi_spinlock() {
+  return &spi_spinlock;
 }

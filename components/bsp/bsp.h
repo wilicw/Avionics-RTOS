@@ -6,6 +6,8 @@
 #include <driver/spi_master.h>
 #include <driver/uart.h>
 #include <esp_log.h>
+#include <esp_vfs_fat.h>
+#include <sdmmc_cmd.h>
 #include <string.h>
 
 #define GPIO_FIRE_1 CONFIG_FIRE_1
@@ -23,7 +25,9 @@
 #define GPS_UART_NUM UART_NUM_2
 
 #define SPI_HOST SPI2_HOST
-#define SPI_FREQ_HZ 100E3
+#define SPI_FREQ_HZ 1E6
+
+#define SD_MOUNT "/sd"
 
 /**
  * @brief GPIO output initialization
@@ -44,7 +48,9 @@ void uart_init();
  * @brief spi initialization
  */
 void spi_init();
+void sd_init();
 
 spi_device_handle_t* fetch_spi_handler();
 QueueHandle_t* fetch_uart_queue();
+portMUX_TYPE* fetch_spi_spinlock();
 #endif
