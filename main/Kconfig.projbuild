@@ -86,4 +86,10 @@ menu "Example Configuration"
 		help
 			Pin Number to be used as the RXEN signal.
 
+	config SD_NSS_GPIO
+		int "SD NSS GPIO"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+		default 5
+		help
+			Pin Number to be used as the NSS SPI signal.
 endmenu
