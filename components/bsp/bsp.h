@@ -52,5 +52,5 @@ void sd_init();
 
 spi_device_handle_t* fetch_spi_handler();
 QueueHandle_t* fetch_uart_queue();
-portMUX_TYPE* fetch_spi_spinlock();
+SemaphoreHandle_t* fetch_spi_spinlock();
 #endif

@@ -11,6 +11,8 @@
 #include "task/sensors.h"
 #include "task/wdt.h"
 
+#define INCLUDE_vTaskSuspend 1
+
 void app_main() {
   gpio_init();
   i2c_init();

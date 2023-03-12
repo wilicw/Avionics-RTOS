@@ -5,7 +5,7 @@
 static QueueHandle_t uart_queue;
 static spi_device_handle_t spi_handle;
 static uint8_t ignitor[] = {GPIO_FIRE_1, GPIO_FIRE_2};
-static portMUX_TYPE spi_spinlock = portMUX_INITIALIZER_UNLOCKED;
+static SemaphoreHandle_t spi_spinlock;
 
 void gpio_init() {
   static const gpio_config_t io_conf = {
@@ -107,6 +107,9 @@ QueueHandle_t* fetch_uart_queue() {
   return &uart_queue;
 }
 
-portMUX_TYPE* fetch_spi_spinlock() {
+SemaphoreHandle_t* fetch_spi_spinlock() {
+  static uint8_t sem_created = 0;
+  if (!sem_created) spi_spinlock = xSemaphoreCreateMutex();
+  sem_created = 1;
   return &spi_spinlock;
 }
