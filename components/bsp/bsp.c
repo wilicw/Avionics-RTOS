@@ -25,8 +25,8 @@ void i2c_init() {
       .mode = I2C_MODE_MASTER,
       .sda_io_num = I2C_MASTER_SDA_IO,
       .scl_io_num = I2C_MASTER_SCL_IO,
-      .sda_pullup_en = GPIO_PULLUP_ENABLE,
-      .scl_pullup_en = GPIO_PULLUP_ENABLE,
+      .sda_pullup_en = GPIO_PULLUP_DISABLE,
+      .scl_pullup_en = GPIO_PULLUP_DISABLE,
       .master.clk_speed = I2C_MASTER_FREQ_HZ,
   };
   i2c_param_config(I2C_MASTER_NUM, &conf);
