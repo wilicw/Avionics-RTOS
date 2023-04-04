@@ -20,7 +20,7 @@ void app_main() {
   spi_init();
   sd_init();
 
-  vTaskDelay(pdMS_TO_TICKS(1000));
+  vTaskDelay(pdMS_TO_TICKS(500));
 
   xTaskCreatePinnedToCore(sensors_task, "sensors_task", 4096, NULL, 4, NULL, 0);
   xTaskCreatePinnedToCore(logger_task, "logger_task", 4096, NULL, 3, NULL, 0);
