@@ -13,6 +13,8 @@
 void storage_init(char *);
 void storage_read(char *, size_t);
 void storage_write(uint8_t *, size_t);
+void storage_flush();
+FILE *storage_fetch();
 void storage_deinit();
 
 #endif

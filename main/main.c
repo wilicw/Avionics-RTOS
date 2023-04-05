@@ -1,4 +1,5 @@
 #include <esp_log.h>
+#include <esp_vfs.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <inttypes.h>
@@ -17,8 +18,14 @@ void app_main() {
   uart_init();
   spi_init();
   sd_init();
+  storage_init(NULL);
 
-  vTaskDelay(pdMS_TO_TICKS(500));
+  /* Logger redirection */
+  printf("Redirect log to file\n");
+  stdout = storage_fetch();
+  _GLOBAL_REENT->_stdout = storage_fetch();
+
+  vTaskDelay(pdMS_TO_TICKS(100));
 
   xTaskCreatePinnedToCore(sensors_task, "sensors_task", 4096, NULL, 4, NULL, 0);
   xTaskCreatePinnedToCore(logger_task, "logger_task", 4096, NULL, 3, NULL, 0);

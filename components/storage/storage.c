@@ -30,6 +30,15 @@ void storage_write(uint8_t *ptr, size_t len) {
   fwrite(ptr, len, 1, f);
 }
 
+void storage_flush() {
+  if (f == NULL) return;
+  fflush(f);
+}
+
+FILE *storage_fetch() {
+  return f;
+}
+
 void storage_deinit() {
   if (f == NULL) return;
   fclose(f);
