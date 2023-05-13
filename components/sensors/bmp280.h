@@ -76,6 +76,9 @@ struct bmp280_calib_param {
   int16_t dig_p9;
 };
 
+typedef struct {
+} pressure_sensor_t;
+
 void bmp280_init();
 void bmp280_read_raw(int32_t*, int32_t*);
 void bmp280_reset();

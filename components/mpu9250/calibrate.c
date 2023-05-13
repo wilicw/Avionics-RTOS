@@ -67,27 +67,26 @@ static void init_imu(void) {
  *
  */
 
-const int NUM_GYRO_READS = 5000;
+const int NUM_GYRO_READS = 1000;
 
-void calibrate_gyro(void) {
+void calibrate_gyro(vector_t *vg_sum) {
   init_imu();
 
   ESP_LOGI(TAG, "--- GYRO CALIBRATION ---");
   ESP_LOGW(TAG, "Keep the MPU very still.  Calculating gyroscope bias");
   wait();
 
-  vector_t vg_sum;
-  vg_sum.x = 0.0;
-  vg_sum.y = 0.0;
-  vg_sum.z = 0.0;
+  vg_sum->x = 0.0;
+  vg_sum->y = 0.0;
+  vg_sum->z = 0.0;
   for (int i = 0; i < NUM_GYRO_READS; i += 1) {
     vector_t vg;
 
     ESP_ERROR_CHECK(get_gyro(&vg));
 
-    vg_sum.x += vg.x;
-    vg_sum.y += vg.y;
-    vg_sum.z += vg.z;
+    vg_sum->x += vg.x;
+    vg_sum->y += vg.y;
+    vg_sum->z += vg.z;
 
     // Make the WDT happy
     // if (i % 100 == 0)
@@ -96,11 +95,11 @@ void calibrate_gyro(void) {
     _pause();
   }
 
-  vg_sum.x /= -NUM_GYRO_READS;
-  vg_sum.y /= -NUM_GYRO_READS;
-  vg_sum.z /= -NUM_GYRO_READS;
+  vg_sum->x /= -NUM_GYRO_READS;
+  vg_sum->y /= -NUM_GYRO_READS;
+  vg_sum->z /= -NUM_GYRO_READS;
 
-  printf("    .gyro_bias_offset = {.x = %f, .y = %f, .z = %f},\n", vg_sum.x, vg_sum.y, vg_sum.z);
+  printf("    .gyro_bias_offset = {.x = %f, .y = %f, .z = %f},\n", vg_sum->x, vg_sum->y, vg_sum->z);
 }
 
 /**
@@ -192,7 +191,7 @@ void run_next_capture(int axis, int dir) {
   calibrate_accel_axis(axis, dir);
 }
 
-void calibrate_accel(void) {
+void calibrate_accel(vector_t *va_offset, vector_t *va_scale_hi, vector_t *va_scale_lo) {
   init_imu();
 
   ESP_LOGI(TAG, "--- ACCEL CALIBRATION ---");
@@ -218,6 +217,18 @@ void calibrate_accel(void) {
          offset.x, offset.y, offset.z,
          scale_lo.x, scale_lo.y, scale_lo.z,
          scale_hi.x, scale_hi.y, scale_hi.z);
+
+  va_offset->x = offset.x;
+  va_offset->y = offset.y;
+  va_offset->z = offset.z;
+
+  va_scale_hi->x = scale_hi.x;
+  va_scale_hi->y = scale_hi.y;
+  va_scale_hi->z = scale_hi.z;
+
+  va_scale_lo->x = scale_lo.x;
+  va_scale_lo->y = scale_lo.y;
+  va_scale_lo->z = scale_lo.z;
 }
 
 /**
@@ -232,10 +243,7 @@ void calibrate_accel(void) {
  * http://www.camelsoftware.com/2016/03/13/imu-maths-calculate-orientation-pt3/
  */
 
-#define MIN(a, b) (a < b ? a : b)
-#define MAX(a, b) (a > b ? a : b)
-
-void calibrate_mag(void) {
+void calibrate_mag(vector_t *vm_offset, vector_t *vm_scale) {
   vector_t v_min = {
       .x = 9.9e99,
       .y = 9.9e99,
@@ -277,7 +285,15 @@ void calibrate_mag(void) {
       .y = avg_radius / v_avg.y,
       .z = avg_radius / v_avg.z};
 
+  vm_offset->x = (v_min.x + v_max.x) / 2;
+  vm_offset->y = (v_min.y + v_max.y) / 2;
+  vm_offset->z = (v_min.z + v_max.z) / 2;
+
+  vm_scale->x = v_scale.x;
+  vm_scale->y = v_scale.y;
+  vm_scale->z = v_scale.z;
+
   printf("\n");
-  printf("    .mag_offset = {.x = %f, .y = %f, .z = %f},\n", (v_min.x + v_max.x) / 2, (v_min.y + v_max.y) / 2, (v_min.z + v_max.z) / 2);
+  printf("    .mag_offset = {.x = %f, .y = %f, .z = %f},\n", vm_offset->x, vm_offset->y, vm_offset->z);
   printf("    .mag_scale = {.x = %f, .y = %f, .z = %f},\n", v_scale.x, v_scale.y, v_scale.z);
 }

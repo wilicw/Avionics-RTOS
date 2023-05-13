@@ -14,11 +14,12 @@ void storage_init(char *_fn) {
     while (stat(fn, &st) == 0)
       sprintf(fn, SD_MOUNT "/" STOR_PREFIX "%04d.txt", ++i);
     f = fopen(fn, "a+");
-    printf("Open %s %d\n", fn, f == NULL);
   } else {
     f = fopen(fn, "a+");
-    printf("Open %s %d\n", _fn, f == NULL);
   }
+  if (f == NULL)
+    esp_restart();
+  printf("Open %s %d\n", fn, fileno(f));
 }
 
 void storage_read(char *ptr, size_t len) {
@@ -33,6 +34,7 @@ void storage_write(uint8_t *ptr, size_t len) {
 void storage_flush() {
   if (f == NULL) return;
   fflush(f);
+  fsync(fileno(f));
 }
 
 FILE *storage_fetch() {

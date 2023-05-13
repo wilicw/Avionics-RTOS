@@ -5,6 +5,7 @@
 #include <freertos/task.h>
 
 #include "gps.h"
+#include "ra01s.h"
 #include "storage.h"
 
 void logger_task(void*);

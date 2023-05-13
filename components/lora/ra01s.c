@@ -2,6 +2,7 @@
 
 #define TAG "RA01S"
 
+static spi_device_handle_t spi_handle;
 static uint8_t PacketParams[6];
 static bool txActive;
 static bool debugPrint;
@@ -25,6 +26,15 @@ void LoRaError(int error) {
 }
 
 void LoRaInit(void) {
+  spi_device_interface_config_t devcfg;
+  memset(&devcfg, 0, sizeof(spi_device_interface_config_t));
+  devcfg.clock_speed_hz = SPI_FREQ_HZ;
+  devcfg.spics_io_num = -1;
+  devcfg.queue_size = 5;
+  devcfg.mode = 0;
+  devcfg.flags = SPI_DEVICE_NO_DUMMY;
+  spi_bus_add_device(LORA_SPI_HOST, &devcfg, &spi_handle);
+
   ESP_LOGI(TAG, "CONFIG_LORA_NSS_GPIO=%d", CONFIG_LORA_NSS_GPIO);
   ESP_LOGI(TAG, "CONFIG_RST_GPIO=%d", CONFIG_RST_GPIO);
   ESP_LOGI(TAG, "CONFIG_BUSY_GPIO=%d", CONFIG_BUSY_GPIO);
@@ -69,7 +79,7 @@ bool spi_write_byte(uint8_t *Dataout, size_t DataLength) {
     SPITransaction.length = DataLength * 8;
     SPITransaction.tx_buffer = Dataout;
     SPITransaction.rx_buffer = NULL;
-    spi_device_transmit(*fetch_spi_handler(), &SPITransaction);
+    spi_device_transmit(spi_handle, &SPITransaction);
   }
 
   return true;
@@ -83,7 +93,7 @@ bool spi_read_byte(uint8_t *Datain, uint8_t *Dataout, size_t DataLength) {
     SPITransaction.length = DataLength * 8;
     SPITransaction.tx_buffer = Dataout;
     SPITransaction.rx_buffer = Datain;
-    spi_device_transmit(*fetch_spi_handler(), &SPITransaction);
+    spi_device_transmit(spi_handle, &SPITransaction);
   }
 
   return true;
@@ -859,4 +869,32 @@ void ReadCommand(uint8_t cmd, uint8_t *data, uint8_t numBytes) {
 		WaitForIdle(BUSY_WAIT);
 	}
 #endif
+}
+
+void lora_init() {
+  const static uint32_t frequencyInHz = 433E6;
+  const static int8_t txPowerInDbm = 22;
+  const static float tcxoVoltage = 3.3;
+  const static bool useRegulatorLDO = true;
+
+  LoRaInit();
+  int ret = LoRaBegin(frequencyInHz, txPowerInDbm, tcxoVoltage, useRegulatorLDO);
+  ESP_LOGI(TAG, "LoRaBegin=%d", ret);
+  if (ret != 0) {
+    ESP_LOGE(pcTaskGetName(NULL), "Does not recognize the module");
+  }
+
+  uint8_t spreadingFactor = 7;
+  uint8_t bandwidth = SX126X_LORA_BW_125_0;
+  uint8_t codingRate = SX126X_LORA_CR_4_5;
+  uint16_t preambleLength = 8;
+  uint8_t payloadLen = 0;
+  bool crcOn = true;
+  bool invertIrq = false;
+#if CONFIF_ADVANCED
+  spreadingFactor = CONFIG_SF_RATE;
+  bandwidth = CONFIG_BANDWIDTH;
+  codingRate = CONFIG_CODING_RATE;
+#endif
+  LoRaConfig(spreadingFactor, bandwidth, codingRate, preambleLength, payloadLen, crcOn, invertIrq);
 }

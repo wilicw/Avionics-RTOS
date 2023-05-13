@@ -1,21 +1,21 @@
 #include "imu.h"
 
+#include <stdint.h>
+
+#include "nvs.h"
+
+// const static vector_t rot = {
+//     .x = 90.0 * (M_PI) / 180.0,
+//     .y = 0.0 * (M_PI) / 180.0,
+//     .z = 90.0 * (M_PI) / 180.0,
+// };
+
+calibration_t *cal = NULL;
 static imu_t imu_instance;
-
-static calibration_t cal = {
-    // .mag_offset = {.x = 0.0, .y = 0.0, .z = 0.0},
-    // .mag_scale = {.x = 1.0, .y = 1.0, .z = 1.0},
-    // .accel_offset = {.x = 0.0, .y = 0.0, .z = 0.0},
-    // .accel_scale_lo = {.x = -1.0, .y = -1.0, .z = -1.0},
-    // .accel_scale_hi = {.x = 1.0, .y = 1.0, .z = 1.0},
-    // .gyro_bias_offset = {.x = 0.0, .y = 0.0, .z = 0.0}
-
-    .accel_offset = {.x = 0.008023, .y = -0.013835, .z = 0.047973},
-    .accel_scale_lo = {.x = 1.002415, .y = 0.991621, .z = 1.022268},
-    .accel_scale_hi = {.x = -0.993995, .y = -1.005425, .z = -0.980493},
-    .gyro_bias_offset = {.x = 0.576727, .y = 0.532752, .z = 1.436956},
-    .mag_offset = {.x = 1.179688, .y = 20.121094, .z = 0.568359},
-    .mag_scale = {.x = 0.824076, .y = 1.214923, .z = 1.037967},
+static float rotation[3][3] = {
+    {1, 0, 0},
+    {0, 1, 0},
+    {0, 0, 1},
 };
 
 /**
@@ -50,12 +50,31 @@ static inline void transform_mag(vector_t *v) {
   v->z = -x;
 }
 
-void imu_init(uint32_t frequency) {
-  i2c_mpu9250_init(&cal);
+static inline void rotate(vector_t *v) {
+  const float x = v->x * rotation[0][0] + v->y * rotation[0][1] + v->z * rotation[0][2];
+  const float y = v->x * rotation[1][0] + v->y * rotation[1][1] + v->z * rotation[1][2];
+  const float z = v->x * rotation[2][0] + v->y * rotation[2][1] + v->z * rotation[2][2];
+  v->x = x;
+  v->y = y;
+  v->z = z;
+}
+
+void imu_init(calibration_t *_cal, uint32_t frequency) {
+  /* Init the MPU and AHRS */
+  cal = _cal;
+  i2c_mpu9250_init(cal);
   MadgwickAHRSinit(frequency, 0.8);
-  // calibrate_gyro();
-  // calibrate_accel();
-  // calibrate_mag();
+
+  /* Construct the rotation matrix */
+  // rotation[0][0] = cos(rot.y) * cos(rot.z) - sin(rot.x) * sin(rot.y) * sin(rot.z);
+  // rotation[0][1] = -1.0 * cos(rot.x) * sin(rot.z);
+  // rotation[0][2] = sin(rot.y) * cos(rot.z) + sin(rot.x) * cos(rot.y) * sin(rot.z);
+  // rotation[1][0] = cos(rot.y) * sin(rot.z) + sin(rot.x) * sin(rot.y) * cos(rot.z);
+  // rotation[1][1] = cos(rot.x) * cos(rot.z);
+  // rotation[1][2] = sin(rot.y) * sin(rot.z) - sin(rot.x) * cos(rot.y) * cos(rot.z);
+  // rotation[2][0] = -1.0 * cos(rot.x) * sin(rot.y);
+  // rotation[2][1] = sin(rot.x);
+  // rotation[2][2] = cos(rot.x) * cos(rot.y);
 }
 
 void imu_update() {
@@ -65,6 +84,11 @@ void imu_update() {
   transform_accel_gyro(&imu_instance.a);
   transform_accel_gyro(&imu_instance.g);
   transform_mag(&imu_instance.m);
+
+  rotate(&imu_instance.a);
+  rotate(&imu_instance.g);
+  rotate(&imu_instance.m);
+
   // Apply the AHRS algorithm
   MadgwickAHRSupdate(
       DEG2RAD(imu_instance.g.x), DEG2RAD(imu_instance.g.y), DEG2RAD(imu_instance.g.z),

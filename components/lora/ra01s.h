@@ -438,4 +438,6 @@ void ReadCommand(uint8_t cmd, uint8_t* data, uint8_t numBytes);
 void SPItransfer(uint8_t cmd, bool write, uint8_t* dataOut, uint8_t* dataIn, uint8_t numBytes, bool waitForBusy);
 void LoRaError(int error);
 
+void lora_init();
+
 #endif

@@ -19,8 +19,9 @@
 #ifndef __CALIBRATE_H
 #define __CALIBRATE_H
 
-void calibrate_gyro(void);
-void calibrate_accel(void);
-void calibrate_mag(void);
+#include "common.h"
+void calibrate_gyro(vector_t *);
+void calibrate_accel(vector_t *, vector_t *, vector_t *);
+void calibrate_mag(vector_t *, vector_t *);
 
 #endif

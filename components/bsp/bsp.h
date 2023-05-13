@@ -8,6 +8,7 @@
 #include <esp_log.h>
 #include <esp_vfs_fat.h>
 #include <sdmmc_cmd.h>
+#include <stdint.h>
 #include <string.h>
 
 #define GPIO_FIRE_1 CONFIG_FIRE_1
@@ -24,8 +25,9 @@
 
 #define GPS_UART_NUM UART_NUM_2
 
-#define SPI_HOST SPI2_HOST
 #define SPI_FREQ_HZ 1E6
+#define LORA_SPI_HOST SPI2_HOST
+#define SD_SPI_HOST SPI3_HOST
 
 #define SD_MOUNT "/sd"
 
@@ -47,10 +49,9 @@ void uart_init();
 /**
  * @brief spi initialization
  */
-void spi_init();
+void spi_init(spi_host_device_t, uint32_t, uint32_t, uint32_t);
 void sd_init();
 
-spi_device_handle_t* fetch_spi_handler();
 QueueHandle_t* fetch_uart_queue();
 SemaphoreHandle_t* fetch_spi_spinlock();
 #endif

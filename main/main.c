@@ -6,36 +6,46 @@
 #include <stdio.h>
 
 #include "bsp.h"
+#include "ra01s.h"
+#include "sdkconfig.h"
 #include "slave.h"
-#include "task/commu.h"
+#include "task/fsm.h"
 #include "task/logger.h"
 #include "task/sensors.h"
 #include "task/wdt.h"
 
-static FILE *f = NULL;
-
 static int log_vprintf(const char *fmt, va_list arguments) {
-  if (f == NULL) printf(fmt, arguments);
-  return vfprintf(f, fmt, arguments);
+  static FILE *f = NULL;
+  static int ret;
+  f = storage_fetch();
+  if (f != NULL)
+    ret = vfprintf(f, fmt, arguments);
+  else
+    ret = vprintf(fmt, arguments);
+  if (ret < 0) printf("Logging error: %d\n", ret);
+  storage_flush();
+  return ret;
 }
 
 void app_main() {
   gpio_init();
   i2c_init();
   uart_init();
-  spi_init();
+  spi_init(LORA_SPI_HOST, CONFIG_LORA_MOSI_GPIO, CONFIG_LORA_MISO_GPIO, CONFIG_LORA_SCK_GPIO);
+  spi_init(SD_SPI_HOST, CONFIG_SD_MOSI_GPIO, CONFIG_SD_MISO_GPIO, CONFIG_SD_SCK_GPIO);
   sd_init();
-  storage_init(NULL);
+  lora_init();
+  // storage_init(NULL);
 
-  f = storage_fetch();
-  esp_log_set_vprintf(log_vprintf);
+  // esp_log_set_vprintf(log_vprintf);
 
   vTaskDelay(pdMS_TO_TICKS(1000));
+  ESP_LOGI("MAIN", "init Complete");
 
-  xTaskCreatePinnedToCore(sensors_task, "sensors_task", 4096, NULL, 4, NULL, 0);
-  xTaskCreatePinnedToCore(logger_task, "logger_task", 4096, NULL, 3, NULL, 0);
-  xTaskCreatePinnedToCore(commu_task, "commu_task", 4096, NULL, 2, NULL, 0);
-  // xTaskCreatePinnedToCore(wdt_task, "wdt_task", 2048, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(fsm_task, "fsm_task", 4096, NULL, 5, NULL, 1);
+  xTaskCreatePinnedToCore(sensors_task, "sensors_task", 8192, NULL, 4, NULL, 1);
+  xTaskCreatePinnedToCore(logger_task, "logger_task", 4096, NULL, 3, NULL, 1);
+  // xTaskCreatePinnedToCore(wdt_task, "wdt_task", 2048, NULL, 1, NULL, 0);
 
   printf("Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
 }

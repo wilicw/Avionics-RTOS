@@ -1,5 +1,9 @@
 #include "bsp.h"
 
+#include <stdint.h>
+
+#include "hal/spi_types.h"
+
 #define TAG "BSP"
 
 static QueueHandle_t uart_queue;
@@ -56,31 +60,17 @@ void uart_init() {
   printf("GPS init...\n");
 }
 
-void spi_init() {
-  static esp_err_t ret;
-  static spi_device_interface_config_t devcfg;
-  static const spi_bus_config_t spi_bus_config = {
-      .sclk_io_num = CONFIG_SCLK_GPIO,
-      .mosi_io_num = CONFIG_MOSI_GPIO,
-      .miso_io_num = CONFIG_MISO_GPIO,
+void spi_init(spi_host_device_t device, uint32_t mosi, uint32_t miso, uint32_t sck) {
+  esp_err_t ret;
+  const spi_bus_config_t spi_bus_config = {
+      .sclk_io_num = sck,
+      .mosi_io_num = mosi,
+      .miso_io_num = miso,
       .quadwp_io_num = -1,
       .quadhd_io_num = -1,
   };
-
-  ret = spi_bus_initialize(SPI_HOST, &spi_bus_config, SPI_DMA_CH_AUTO);
-  ESP_LOGI(TAG, "spi_bus_initialize=%d", ret);
-
-  memset(&devcfg, 0, sizeof(spi_device_interface_config_t));
-  devcfg.clock_speed_hz = SPI_FREQ_HZ;
-  // It does work with software CS control.
-  devcfg.spics_io_num = -1;
-  devcfg.queue_size = 5;
-  devcfg.mode = 0;
-  devcfg.flags = SPI_DEVICE_NO_DUMMY;
-
-  // spi_device_handle_t handle;
-  ret = spi_bus_add_device(SPI_HOST, &devcfg, &spi_handle);
-  ESP_LOGI(TAG, "spi_bus_add_device=%d", ret);
+  ret = spi_bus_initialize(device, &spi_bus_config, SPI_DMA_CH_AUTO);
+  ESP_LOGI(TAG, "SPI%d_HOST spi_bus_initialize=%d", device + 1, ret);
 }
 
 void sd_init() {
@@ -93,14 +83,11 @@ void sd_init() {
       .max_files = 5,
       .allocation_unit_size = 16 * 1024,
   };
+  host.slot = SD_SPI_HOST;
   slot_config.gpio_cs = CONFIG_SD_NSS_GPIO;
   slot_config.host_id = host.slot;
   esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config, &card);
   sdmmc_card_print_info(stdout, card);
-}
-
-spi_device_handle_t* fetch_spi_handler() {
-  return &spi_handle;
 }
 
 QueueHandle_t* fetch_uart_queue() {
