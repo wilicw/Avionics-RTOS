@@ -90,6 +90,10 @@ void sd_init() {
   sdmmc_card_print_info(stdout, card);
 }
 
+uint32_t bsp_current_time() {
+  return xTaskGetTickCount();
+}
+
 QueueHandle_t* fetch_uart_queue() {
   return &uart_queue;
 }

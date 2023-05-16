@@ -52,6 +52,8 @@ void uart_init();
 void spi_init(spi_host_device_t, uint32_t, uint32_t, uint32_t);
 void sd_init();
 
+uint32_t bsp_current_time();
+
 QueueHandle_t* fetch_uart_queue();
 SemaphoreHandle_t* fetch_spi_spinlock();
 #endif
