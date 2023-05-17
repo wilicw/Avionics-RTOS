@@ -2,6 +2,8 @@
 
 #define TAG "BMP280"
 
+static pressure_sensor_t pressure_sensor_instance;
+
 void bmp280_init() {
   // use the "handheld device dynamic" optimal setting (see datasheet)
   uint8_t buf[2];
@@ -19,6 +21,9 @@ void bmp280_init() {
   buf[0] = REG_CTRL_MEAS;
   buf[1] = reg_ctrl_meas_val;
   i2c_master_write_to_device(I2C_MASTER_NUM, BMP280_SENSOR_ADDRESS, &buf, 2, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
+
+  pressure_sensor_instance.init_altitude = 0;
+  bmp280_get_calib_params(&pressure_sensor_instance.params);
 }
 
 void bmp280_read_raw(int32_t* temp, int32_t* pressure) {
@@ -111,4 +116,21 @@ void bmp280_get_calib_params(struct bmp280_calib_param* params) {
   params->dig_p7 = (int16_t)(buf[19] << 8) | buf[18];
   params->dig_p8 = (int16_t)(buf[21] << 8) | buf[20];
   params->dig_p9 = (int16_t)(buf[23] << 8) | buf[22];
+}
+
+static inline int32_t pressure2altitude(int32_t pressure) {
+  return 145366.45 * (1 - pow(pressure / 1013.25, 0.190284)) * 0.3084;
+}
+
+void bmp280_update() {
+  static int32_t raw_temperature, raw_pressure;
+  bmp280_read_raw(&raw_temperature, &raw_pressure);
+  pressure_sensor_instance.temperature = bmp280_convert_temp(raw_temperature, &pressure_sensor_instance.params);
+  pressure_sensor_instance.pressure = bmp280_convert_pressure(raw_pressure, raw_temperature, &pressure_sensor_instance.params);
+  pressure_sensor_instance.altitude = pressure2altitude(pressure_sensor_instance.pressure);
+  pressure_sensor_instance.last_update = bsp_current_time();
+}
+
+pressure_sensor_t* bmp_fetch() {
+  return &pressure_sensor_instance;
 }

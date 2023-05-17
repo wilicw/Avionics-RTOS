@@ -8,6 +8,7 @@
 #ifndef __BMP_H__
 #define __BMP_H__
 
+#include <math.h>
 #include <stdint.h>
 
 #include "bsp.h"
@@ -77,13 +78,22 @@ struct bmp280_calib_param {
 };
 
 typedef struct {
+  int32_t temperature;
+  int32_t pressure;
+  int32_t altitude;
+  int32_t init_altitude;
+  struct bmp280_calib_param params;
+  uint32_t last_update;
 } pressure_sensor_t;
 
 void bmp280_init();
-void bmp280_read_raw(int32_t*, int32_t*);
+void bmp280_read_raw(int32_t *, int32_t *);
 void bmp280_reset();
-int32_t bmp280_convert(int32_t, struct bmp280_calib_param*);
-int32_t bmp280_convert_temp(int32_t, struct bmp280_calib_param*);
-int32_t bmp280_convert_pressure(int32_t, int32_t, struct bmp280_calib_param*);
-void bmp280_get_calib_params(struct bmp280_calib_param*);
+int32_t bmp280_convert(int32_t, struct bmp280_calib_param *);
+int32_t bmp280_convert_temp(int32_t, struct bmp280_calib_param *);
+int32_t bmp280_convert_pressure(int32_t, int32_t, struct bmp280_calib_param *);
+void bmp280_get_calib_params(struct bmp280_calib_param *);
+void bmp280_update();
+pressure_sensor_t *bmp_fetch();
+
 #endif
