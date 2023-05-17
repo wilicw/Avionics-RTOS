@@ -1,27 +1,22 @@
 #include "bsp.h"
 
-#include <stdint.h>
-
-#include "hal/spi_types.h"
-
 #define TAG "BSP"
 
 static QueueHandle_t uart_queue;
-static spi_device_handle_t spi_handle;
 static uint8_t ignitor[] = {GPIO_FIRE_1, GPIO_FIRE_2};
-static SemaphoreHandle_t spi_spinlock;
 
 void gpio_init() {
-  static const gpio_config_t io_conf = {
-      .intr_type = GPIO_INTR_DISABLE,
-      .mode = GPIO_MODE_OUTPUT,
-      .pin_bit_mask = GPIO_OUTPUT_PIN_SEL,
-      .pull_down_en = 0,
-      .pull_up_en = 0,
-  };
-  gpio_config(&io_conf);
-  for (ssize_t i = 0; i < sizeof(ignitor); i++)
+  for (ssize_t i = 0; i < sizeof(ignitor); i++) {
+    const gpio_config_t io_conf = {
+        .intr_type = GPIO_INTR_DISABLE,
+        .mode = GPIO_MODE_OUTPUT,
+        .pin_bit_mask = (1ULL << ignitor[i]),
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+    };
     gpio_set_level(ignitor[i], 1);
+    gpio_config(&io_conf);
+  }
 }
 
 void i2c_init() {
@@ -96,11 +91,4 @@ uint32_t bsp_current_time() {
 
 QueueHandle_t* fetch_uart_queue() {
   return &uart_queue;
-}
-
-SemaphoreHandle_t* fetch_spi_spinlock() {
-  static uint8_t sem_created = 0;
-  if (!sem_created) spi_spinlock = xSemaphoreCreateMutex();
-  sem_created = 1;
-  return &spi_spinlock;
 }

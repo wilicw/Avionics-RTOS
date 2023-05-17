@@ -13,7 +13,6 @@
 
 #define GPIO_FIRE_1 CONFIG_FIRE_1
 #define GPIO_FIRE_2 CONFIG_FIRE_2
-#define GPIO_OUTPUT_PIN_SEL ((1ULL << GPIO_FIRE_1) | (1ULL << GPIO_FIRE_2))
 
 #define I2C_MASTER_SCL_IO CONFIG_I2C_MASTER_SCL /*!< GPIO number used for I2C master clock */
 #define I2C_MASTER_SDA_IO CONFIG_I2C_MASTER_SDA /*!< GPIO number used for I2C master data  */
@@ -55,5 +54,4 @@ void sd_init();
 uint32_t bsp_current_time();
 
 QueueHandle_t* fetch_uart_queue();
-SemaphoreHandle_t* fetch_spi_spinlock();
 #endif
