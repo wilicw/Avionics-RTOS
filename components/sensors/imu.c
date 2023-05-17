@@ -1,9 +1,5 @@
 #include "imu.h"
 
-#include <stdint.h>
-
-#include "nvs.h"
-
 // const static vector_t rot = {
 //     .x = 90.0 * (M_PI) / 180.0,
 //     .y = 0.0 * (M_PI) / 180.0,
