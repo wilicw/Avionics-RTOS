@@ -60,6 +60,10 @@ void imu_init(calibration_t *_cal, uint32_t frequency) {
   cal = _cal;
   i2c_mpu9250_init(cal);
   MadgwickAHRSinit(frequency, 0.8);
+  imu_instance.freq = frequency;
+  imu_instance.velocity.x = 0;
+  imu_instance.velocity.y = 0;
+  imu_instance.velocity.z = 0;
 
   /* Construct the rotation matrix */
   // rotation[0][0] = cos(rot.y) * cos(rot.z) - sin(rot.x) * sin(rot.y) * sin(rot.z);
@@ -92,6 +96,9 @@ void imu_update() {
       imu_instance.m.x, imu_instance.m.y, imu_instance.m.z);
 
   MadgwickGetEulerAnglesDegrees(&imu_instance.heading, &imu_instance.pitch, &imu_instance.roll);
+  imu_instance.velocity.x += imu_instance.a.x / imu_instance.freq;
+  imu_instance.velocity.y += imu_instance.a.y / imu_instance.freq;
+  imu_instance.velocity.z += imu_instance.a.z / imu_instance.freq;
 }
 
 imu_t *imu_fetch() {

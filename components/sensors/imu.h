@@ -10,7 +10,9 @@
 #include "mpu9250.h"
 
 typedef struct {
+  uint32_t freq;
   vector_t a, g, m;
+  vector_t velocity;
   float heading, pitch, roll;
 } imu_t;
 
