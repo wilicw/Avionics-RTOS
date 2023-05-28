@@ -81,6 +81,7 @@ typedef struct {
   int32_t temperature;
   int32_t pressure;
   int32_t altitude;
+  int32_t relative_altitude;
   int32_t init_altitude;
   struct bmp280_calib_param params;
   uint32_t last_update;

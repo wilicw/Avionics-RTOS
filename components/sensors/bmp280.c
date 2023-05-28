@@ -24,6 +24,9 @@ void bmp280_init() {
 
   pressure_sensor_instance.init_altitude = 0;
   bmp280_get_calib_params(&pressure_sensor_instance.params);
+
+  bmp280_update();
+  pressure_sensor_instance.init_altitude = pressure_sensor_instance.altitude;
 }
 
 void bmp280_read_raw(int32_t* temp, int32_t* pressure) {
@@ -119,7 +122,8 @@ void bmp280_get_calib_params(struct bmp280_calib_param* params) {
 }
 
 static inline int32_t pressure2altitude(int32_t pressure) {
-  return 145366.45 * (1 - pow(pressure / 1013.25, 0.190284)) * 0.3084;
+  float mbar = (float)pressure / 100.0;
+  return 145366.45 * (1 - pow(mbar / 1013.25, 0.190284)) * 0.3084;
 }
 
 void bmp280_update() {
@@ -129,6 +133,7 @@ void bmp280_update() {
   pressure_sensor_instance.pressure = bmp280_convert_pressure(raw_pressure, raw_temperature, &pressure_sensor_instance.params);
   pressure_sensor_instance.altitude = pressure2altitude(pressure_sensor_instance.pressure);
   pressure_sensor_instance.last_update = bsp_current_time();
+  pressure_sensor_instance.relative_altitude = pressure_sensor_instance.altitude - pressure_sensor_instance.init_altitude;
 }
 
 pressure_sensor_t* bmp_fetch() {
