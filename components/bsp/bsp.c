@@ -73,7 +73,8 @@ void spi_init(spi_host_device_t device, uint32_t mosi, uint32_t miso, uint32_t s
   ESP_LOGI(TAG, "SPI%d_HOST spi_bus_initialize=%d", device + 1, ret);
 }
 
-void sd_init() {
+esp_err_t sd_init() {
+  esp_err_t err;
   sdmmc_card_t* card;
   const char mount_point[] = SD_MOUNT;
   sdmmc_host_t host = SDSPI_HOST_DEFAULT();
@@ -86,8 +87,10 @@ void sd_init() {
   host.slot = SD_SPI_HOST;
   slot_config.gpio_cs = CONFIG_SD_NSS_GPIO;
   slot_config.host_id = host.slot;
-  esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config, &card);
+  err = esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config, &card);
+  if (err != ESP_OK) return err;
   sdmmc_card_print_info(stdout, card);
+  return ESP_OK;
 }
 
 uint32_t bsp_current_time() {

@@ -49,7 +49,7 @@ void uart_init();
  * @brief spi initialization
  */
 void spi_init(spi_host_device_t, uint32_t, uint32_t, uint32_t);
-void sd_init();
+esp_err_t sd_init();
 
 uint32_t bsp_current_time();
 
