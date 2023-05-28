@@ -2,24 +2,64 @@
 
 #define TAG "sensors"
 
-static TimerHandle_t timer100hz;
+static uint8_t* commu_buffer;
+static TimerHandle_t timer_handler;
 static imu_t* imu_instance;
 static pressure_sensor_t* pressure_altitude_instance;
 static calibration_t cal = {
-    .gyro_bias_offset = {.x = -5.158530, .y = -5.315794, .z = 0.360488},
-    .accel_offset = {.x = 0.041205, .y = 0.160501, .z = 0.175093},
-    .accel_scale_lo = {.x = 1.000718, .y = 1.053886, .z = 1.076510},
-    .accel_scale_hi = {.x = -0.958496, .y = -0.906022, .z = -0.910636},
-    .mag_offset = {.x = -24.423828, .y = 98.613281, .z = 20.097656},
-    .mag_scale = {.x = 0.878383, .y = 1.105444, .z = 1.045008},
+    .gyro_bias_offset = {.x = 0, .y = 0, .z = 0},
+    .accel_offset = {.x = 0, .y = 0, .z = 0},
+    .accel_scale_lo = {.x = 1, .y = 1, .z = 1},
+    .accel_scale_hi = {.x = -1, .y = -1, .z = -1},
+    .mag_offset = {.x = 0, .y = 0, .z = 0},
+    .mag_scale = {.x = 1, .y = 1, .z = 1},
 };
+static gps_t* gps_instance;
 
 static void sensors_loop(TimerHandle_t xTimervoid) {
+  static uint32_t systick;
+  systick = bsp_current_time();
   imu_update();
   bmp280_update();
-  ESP_LOGI(TAG, "%f %f %f %f %f %f",
-           imu_instance->heading, imu_instance->pitch, imu_instance->roll,
-           imu_instance->a.x, imu_instance->a.y, imu_instance->a.z);
+
+  /* logging pattern ref: https://hackmd.io/s6x3UGifRqWUFJ7deyzGbw */
+
+  uint8_t* logger_ptr = commu_buffer;
+  memcpy(logger_ptr + 1, &systick, sizeof(systick));
+  logger_ptr += sizeof(systick);
+
+  memcpy(logger_ptr, &pressure_altitude_instance->relative_altitude, sizeof(pressure_altitude_instance->relative_altitude));
+  logger_ptr += sizeof(pressure_altitude_instance->relative_altitude);
+
+  memcpy(logger_ptr, &imu_instance->velocity, sizeof(imu_instance->velocity));
+  logger_ptr += sizeof(imu_instance->velocity);
+
+  memcpy(logger_ptr, &imu_instance->a, sizeof(imu_instance->a));
+  logger_ptr += sizeof(imu_instance->a);
+
+  memcpy(logger_ptr, &imu_instance->g, sizeof(imu_instance->g));
+  logger_ptr += sizeof(imu_instance->g);
+
+  memcpy(logger_ptr, &imu_instance->m, sizeof(imu_instance->m));
+  logger_ptr += sizeof(imu_instance->m);
+
+  memcpy(logger_ptr, &gps_instance->longitude, sizeof(gps_instance->longitude));
+  logger_ptr += sizeof(gps_instance->longitude);
+
+  memcpy(logger_ptr, &gps_instance->latitude, sizeof(gps_instance->latitude));
+  logger_ptr += sizeof(gps_instance->latitude);
+
+  memcpy(logger_ptr, &gps_instance->altitude, sizeof(gps_instance->altitude));
+  logger_ptr += sizeof(gps_instance->altitude);
+
+  memcpy(logger_ptr, &imu_instance->roll, sizeof(imu_instance->roll));
+  logger_ptr += sizeof(imu_instance->roll);
+
+  memcpy(logger_ptr, &imu_instance->pitch, sizeof(imu_instance->pitch));
+  logger_ptr += sizeof(imu_instance->pitch);
+
+  memcpy(logger_ptr, &imu_instance->heading, sizeof(imu_instance->heading));
+  logger_ptr += sizeof(imu_instance->heading);
 }
 
 void sensors_task(void* args) {
