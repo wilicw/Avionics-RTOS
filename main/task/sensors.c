@@ -25,15 +25,25 @@ static void sensors_loop(TimerHandle_t xTimervoid) {
 void sensors_task(void* args) {
   imu_instance = imu_fetch();
   pressure_altitude_instance = bmp_fetch();
+  gps_instance = gps_fetch();
+  commu_buffer = buffer_fetch();
 
   bmp280_init();
   gps_init();
-  imu_init(&cal, 100);
+  storage_read_config("/sd/imu", &cal, sizeof(cal));
+  imu_init(&cal, sensor_freq);
+
+  // calibration_t _cal;
+  // memset(&_cal, 0, sizeof(_cal));
+  // calibrate_gyro(&_cal.gyro_bias_offset);
+  // calibrate_accel(&_cal.accel_offset, &_cal.accel_scale_hi, &_cal.accel_scale_lo);
+  // calibrate_mag(&_cal.mag_offset, &_cal.mag_scale);
+  // storage_write_config("/sd/imu", &_cal, sizeof(_cal));
 
   vTaskDelay(pdMS_TO_TICKS(500));
 
-  timer100hz = xTimerCreate("sensors_loop", pdMS_TO_TICKS(10), pdTRUE, (void*)0, sensors_loop);
-  xTimerStart(timer100hz, 0);
+  timer_handler = xTimerCreate("sensors_loop", pdMS_TO_TICKS(1000 / sensor_freq), pdTRUE, (void*)0, sensors_loop);
+  xTimerStart(timer_handler, 0);
 
   vTaskDelete(NULL);
 }

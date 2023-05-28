@@ -45,3 +45,16 @@ void storage_deinit() {
   if (f == NULL) return;
   fclose(f);
 }
+
+void storage_write_config(const char *path, void *data, size_t len) {
+  FILE *f = fopen(path, "w+");
+  fwrite(data, len, 1, f);
+  fclose(f);
+}
+
+void storage_read_config(const char *path, void *data, size_t len) {
+  FILE *f = fopen(path, "a+");
+  fseek(f, SEEK_SET, 0);
+  fread(data, len, 1, f);
+  fclose(f);
+}
