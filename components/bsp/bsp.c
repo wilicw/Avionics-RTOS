@@ -1,5 +1,7 @@
 #include "bsp.h"
 
+#include "driver/gpio.h"
+
 #define TAG "BSP"
 
 static QueueHandle_t uart_queue;
@@ -17,6 +19,9 @@ void gpio_init() {
     gpio_set_level(ignitor[i], 1);
     gpio_config(&io_conf);
   }
+
+  gpio_set_level(CONFIG_INDI_LED, 0);
+  gpio_set_direction(CONFIG_INDI_LED, GPIO_MODE_OUTPUT);
 }
 
 void i2c_init() {
