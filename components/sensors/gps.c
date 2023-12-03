@@ -5,10 +5,11 @@
 static gps_t gps_instance;
 
 void gps_init() {
-  xTaskCreate(gps_parse_task, "gps_parse_task", 2048, NULL, 12, NULL);
+  xTaskCreate(gps_parse_task, "gps_parse_task", 8192, NULL, 12, NULL);
 }
 
 static inline void gps_parser(uint8_t *raw) {
+  // printf("%s", raw);
   /* Only prase GGA message */
   if (strstr((char *)raw, "GGA") == NULL) return;
   static nmea_t parsed;
@@ -76,6 +77,8 @@ static inline void gps_parser(uint8_t *raw) {
           CHAR2INT(parsed.field[4][9]);
       gps_instance.longitude *= parsed.field[5][0] == 'E' ? 1 : -1;
     }
+
+    gps_instance.altitude = strtof((char *)parsed.field[9], NULL);
 
     /* Set ready to true */
     gps_instance.ready = CHAR2INT(parsed.field[6][0]);

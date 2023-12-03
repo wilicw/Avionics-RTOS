@@ -2,6 +2,11 @@ menu "ISP32 Configuration"
 
     orsource "$IDF_PATH/examples/common_components/env_caps/$IDF_TARGET/Kconfig.env_caps"
 
+    config INT_IO
+        int "GPIO output pin for external interrupt"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+        default 16
+
     config INDI_LED
         int "GPIO output pin for indicator led"
         range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
@@ -10,12 +15,12 @@ menu "ISP32 Configuration"
     config FIRE_1
         int "GPIO output pin for ignitor #1"
         range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
-        default 48
+        default 47
 
     config FIRE_2
         int "GPIO output pin for ignitor #1"
         range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
-        default 47
+        default 48
 
     config I2C_MASTER_SCL
         int "SCL GPIO Num"

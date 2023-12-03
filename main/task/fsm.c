@@ -1,47 +1,100 @@
 #include "fsm.h"
 
-#define TAG "FSM"
+#include <stdint.h>
 
-void fsm_task(void*) {
+#include "bmp280.h"
+#include "bsp.h"
+#include "driver/gpio.h"
+
+#define TAG "FSM"
+#define FSM_DELAY 50
+
+static fsm_state_e state = FSM_INIT;
+static fsm_state_e last_state = 0;
+const float apogee_vel_range = 0.5;
+
+void fsm_task(void* args) {
+  vTaskDelay(3000);
   static imu_t* imu_instance;
-  static fsm_state_e state = FSM_INIT;
+  static pressure_sensor_t* pressure_instance;
   imu_instance = imu_fetch();
+  pressure_instance = bmp_fetch();
+  static uint32_t launch_time = 0, flight_time;
   for (;;) {
+    // printf("%d\n", gpio_get_level(CONFIG_INT_IO));
+    if (state >= 2) {
+      flight_time = bsp_current_time() - launch_time;
+    } else {
+      flight_time = 0;
+    }
+    if (last_state != state) {
+      printf("%d\n", state);
+      last_state = state;
+    }
     switch (state) {
       case FSM_INIT:
-        ESP_LOGI(TAG, "%d", state);
         state = FSM_GROUND;
         break;
       case FSM_GROUND:
-        ESP_LOGI(TAG, "%d", state);
-        if (ABS(imu_instance->a.x) > 3 || ABS(imu_instance->a.y) > 3 || ABS(imu_instance->a.z) > 3) {
+        if (pressure_instance->relative_altitude >= 20) {
           state = FSM_RASING;
+          launch_time = bsp_current_time();
         }
         break;
       case FSM_RASING:
-        ESP_LOGI(TAG, "%d", state);
+        if (flight_time >= 3000 && flight_time < 30000) {
+          if (pressure_instance->relative_altitude <= 20) {
+            state = FSM_GROUND;
+          }
+        } else if (flight_time >= 30000) {
+          state = FSM_APOGEE;
+        }
         break;
       case FSM_APOGEE:
-        ESP_LOGI(TAG, "%d", state);
+        state = FSM_PARACHUTE;
         break;
-      case FSM_PARACHUTE:
-        ESP_LOGI(TAG, "%d", state);
+      case FSM_PARACHUTE: {
+        /* Deploy parachute */
+        gpio_set_level(CONFIG_FIRE_1, 0);
+        state = FSM_DETACH;
         break;
-      case FSM_DEACCE:
-        ESP_LOGI(TAG, "%d", state);
+      }
+      case FSM_DETACH:
+        if (gpio_get_level(CONFIG_INT_IO) == 1) {
+          vTaskDelay(100);
+          if (gpio_get_level(CONFIG_INT_IO) == 1) {
+            vTaskDelay(3000);
+            state = FSM_FALING;
+            servo(0, 70);
+            vTaskDelay(1000);
+          }
+        }
+        break;
+      case FSM_FALING:
+        if (pressure_instance->relative_altitude <= 125) {
+          state = FSM_DEPLOY;
+        }
         break;
       case FSM_DEPLOY:
-        ESP_LOGI(TAG, "%d", state);
+        gpio_set_level(CONFIG_FIRE_2, 0);
+        state = FSM_TOUCH_GROUND;
         break;
       case FSM_TOUCH_GROUND:
-        ESP_LOGI(TAG, "%d", state);
+        if (flight_time >= 600 * 1000) {
+          state = FSM_END;
+        }
         break;
       case FSM_END:
-        ESP_LOGI(TAG, "%d", state);
+        esp_log_set_vprintf(vprintf);
+        vTaskDelete(NULL);
         break;
       default:
         break;
     }
-    vTaskDelay(10);
+    vTaskDelay(1);
   }
+}
+
+fsm_state_e* fsm_fetch() {
+  return &state;
 }

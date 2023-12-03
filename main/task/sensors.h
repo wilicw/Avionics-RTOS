@@ -9,6 +9,7 @@
 #include "bmp280.h"
 #include "bsp.h"
 #include "commu.h"
+#include "fsm.h"
 #include "gps.h"
 #include "imu.h"
 #include "slave.h"

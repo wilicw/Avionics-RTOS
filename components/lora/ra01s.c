@@ -13,8 +13,7 @@ static int SX126x_TXEN;
 static int SX126x_RXEN;
 
 // Arduino compatible macros
-#define delayMicroseconds(us) esp_rom_delay_us(us)
-#define delay(ms) esp_rom_delay_us(ms * 1000)
+#define delay(ms) vTaskDelay(pdMS_TO_TICKS(ms))
 
 void LoRaError(int error) {
   if (debugPrint) {

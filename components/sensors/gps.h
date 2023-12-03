@@ -25,6 +25,7 @@ typedef struct {
    * */
   int32_t latitude;
   int32_t longitude;
+  float altitude;
   /* UTC Time */
   struct {
     uint8_t hour;

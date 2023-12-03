@@ -1,26 +1,40 @@
 #include "bmp280.h"
 
+#include <stdint.h>
+
+#include "bsp.h"
+
 #define TAG "BMP280"
 
 static pressure_sensor_t pressure_sensor_instance;
 
 void bmp280_init() {
+  esp_err_t err;
   // use the "handheld device dynamic" optimal setting (see datasheet)
   uint8_t buf[2];
 
-  // 0.5ms sampling time, x16 filter
-  const uint8_t reg_config_val = ((0x00 << 5) | (0x05 << 2)) & 0xFC;
+  const uint8_t reg_config_val = ((0x00 << 5) | (0x00 << 2)) & 0xFC;
 
   // send register number followed by its corresponding value
   buf[0] = REG_CONFIG;
   buf[1] = reg_config_val;
-  i2c_master_write_to_device(I2C_MASTER_NUM, BMP280_SENSOR_ADDRESS, &buf, 2, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
+  err = i2c_master_write_to_device(I2C_MASTER_NUM, BMP280_SENSOR_ADDRESS, &buf, 2, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "bmp280 error %d", err);
+    while (1)
+      ;
+  }
 
-  // osrs_t x1, osrs_p x4, normal mode operation
-  const uint8_t reg_ctrl_meas_val = (0x01 << 5) | (0x03 << 2) | (0x03);
+  // osrs_t x2 osrs_p x1, normal mode operation
+  const uint8_t reg_ctrl_meas_val = (0x2 << 5) | (0x1 << 2) | (0x03);
   buf[0] = REG_CTRL_MEAS;
   buf[1] = reg_ctrl_meas_val;
-  i2c_master_write_to_device(I2C_MASTER_NUM, BMP280_SENSOR_ADDRESS, &buf, 2, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
+  err = i2c_master_write_to_device(I2C_MASTER_NUM, BMP280_SENSOR_ADDRESS, &buf, 2, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "bmp280 error %d", err);
+    while (1)
+      ;
+  }
 
   pressure_sensor_instance.init_altitude = 0;
   bmp280_get_calib_params(&pressure_sensor_instance.params);
@@ -36,7 +50,7 @@ void bmp280_read_raw(int32_t* temp, int32_t* pressure) {
 
   uint8_t buf[6];
   uint8_t reg = REG_PRESSURE_MSB;
-  i2c_master_write_read_device(I2C_MASTER_NUM, BMP280_SENSOR_ADDRESS, &reg, 1, buf, 6, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
+  esp_err_t err = i2c_master_write_read_device(I2C_MASTER_NUM, BMP280_SENSOR_ADDRESS, &reg, 1, buf, 6, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
 
   // store the 20 bit read in a 32 bit signed integer for conversion
   *pressure = (buf[0] << 12) | (buf[1] << 4) | (buf[2] >> 4);
@@ -121,19 +135,36 @@ void bmp280_get_calib_params(struct bmp280_calib_param* params) {
   params->dig_p9 = (int16_t)(buf[23] << 8) | buf[22];
 }
 
-static inline int32_t pressure2altitude(int32_t pressure) {
+static inline float pressure2altitude(int32_t pressure) {
   float mbar = (float)pressure / 100.0;
   return 145366.45 * (1 - pow(mbar / 1013.25, 0.190284)) * 0.3084;
 }
 
 void bmp280_update() {
   static int32_t raw_temperature, raw_pressure;
+  static float last_altitude_iir = 0;
+  static float last_altitude_lpf = 0;
+  static float last_velocity_lpf = 0;
+  static float last_velocity_iir = 0;
+  static float iir_altitude = 0;
   bmp280_read_raw(&raw_temperature, &raw_pressure);
   pressure_sensor_instance.temperature = bmp280_convert_temp(raw_temperature, &pressure_sensor_instance.params);
   pressure_sensor_instance.pressure = bmp280_convert_pressure(raw_pressure, raw_temperature, &pressure_sensor_instance.params);
   pressure_sensor_instance.altitude = pressure2altitude(pressure_sensor_instance.pressure);
   pressure_sensor_instance.last_update = bsp_current_time();
+
   pressure_sensor_instance.relative_altitude = pressure_sensor_instance.altitude - pressure_sensor_instance.init_altitude;
+  pressure_sensor_instance.relative_altitude = lpf(pressure_sensor_instance.relative_altitude, last_altitude_lpf, 20, 100);
+  last_altitude_lpf = pressure_sensor_instance.relative_altitude;
+
+  iir_altitude = iir_1st(pressure_sensor_instance.relative_altitude, last_altitude_iir, 0.98);
+  pressure_sensor_instance.velocity = 100 * (iir_altitude - last_altitude_iir);
+  pressure_sensor_instance.velocity = lpf(pressure_sensor_instance.velocity, last_velocity_lpf, 10, 100);
+  last_velocity_lpf = pressure_sensor_instance.velocity;
+  pressure_sensor_instance.velocity = iir_1st(pressure_sensor_instance.velocity, last_velocity_iir, 0.8);
+
+  last_altitude_iir = iir_altitude;
+  last_velocity_iir = pressure_sensor_instance.velocity;
 }
 
 pressure_sensor_t* bmp_fetch() {

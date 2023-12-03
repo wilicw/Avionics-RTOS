@@ -9,6 +9,7 @@ static uint8_t ignitor[] = {GPIO_FIRE_1, GPIO_FIRE_2};
 
 void gpio_init() {
   for (ssize_t i = 0; i < sizeof(ignitor); i++) {
+    gpio_set_level(ignitor[i], 1);
     const gpio_config_t io_conf = {
         .intr_type = GPIO_INTR_DISABLE,
         .mode = GPIO_MODE_OUTPUT,
@@ -22,6 +23,10 @@ void gpio_init() {
 
   gpio_set_level(CONFIG_INDI_LED, 0);
   gpio_set_direction(CONFIG_INDI_LED, GPIO_MODE_OUTPUT);
+
+  gpio_set_level(CONFIG_INT_IO, 1);
+  gpio_set_direction(CONFIG_INT_IO, GPIO_MODE_INPUT);
+  gpio_pullup_en(CONFIG_INT_IO);
 }
 
 void i2c_init() {
@@ -95,6 +100,20 @@ esp_err_t sd_init() {
 
 uint32_t bsp_current_time() {
   return xTaskGetTickCount();
+}
+
+// x    : input
+// y    : last output
+// fc   : cut-off frequency
+// fs   : sampling frequency
+float lpf(float x, float y, float fc, float fs) {
+  float tau = 1 / (2.0 * M_PI * fc);
+  float alpha = (1.0 / fs) / (tau + (1.0 / fs));
+  return y + alpha * (x - y);
+}
+
+float iir_1st(float x, float y, float a) {
+  return (1 - a) * x + a * y;
 }
 
 QueueHandle_t* fetch_uart_queue() {

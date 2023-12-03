@@ -7,6 +7,7 @@
 #include <driver/uart.h>
 #include <esp_log.h>
 #include <esp_vfs_fat.h>
+#include <math.h>
 #include <sdmmc_cmd.h>
 #include <stdint.h>
 #include <string.h>
@@ -50,6 +51,9 @@ void uart_init();
  */
 void spi_init(spi_host_device_t, uint32_t, uint32_t, uint32_t);
 esp_err_t sd_init();
+
+float lpf(float, float, float, float);
+float iir_1st(float, float, float);
 
 uint32_t bsp_current_time();
 
