@@ -50,17 +50,17 @@ menu "ISP32 Configuration"
   	config LORA_NSS_GPIO
   		int "LORA NSS GPIO"
       range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
-  		default 2
+  		default 21
 
   	config RST_GPIO
   		int "LORA RST GPIO"
       range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
-  		default 21
+  		default 41
 
   	config BUSY_GPIO
   		int "LORA BUSY GPIO"
       range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
-      default 38
+      default 40
 
   	config TXEN_GPIO
   		int "LORA TXEN GPIO"
@@ -75,21 +75,21 @@ menu "ISP32 Configuration"
     config SD_MOSI_GPIO
 		  int "SD MOSI GPIO"
       range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
-      default 39
+      default 11
 
     config SD_MISO_GPIO
 		  int "SD MISO GPIO"
       range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
-      default 41
+      default 13
 
     config SD_SCK_GPIO
 		  int "SD SCK GPIO"
       range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
-      default 40
+      default 12
 
   	config SD_NSS_GPIO
   		int "SD NSS GPIO"
       range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
-  		default 5
+  		default 10
 
 endmenu
