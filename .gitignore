@@ -55,3 +55,5 @@ dkms.conf
 build/
 *.json
 cmake-*/
+
+.DS_Store
